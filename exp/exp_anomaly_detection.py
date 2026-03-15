@@ -183,7 +183,8 @@ class Exp_Anomaly_Detection(Exp_Basic):
         print("gt:     ", gt.shape)
 
         # (4) detection adjustment
-        gt, pred = adjustment(gt, pred)
+        # 常检测metric
+        # gt, pred = adjustment(gt, pred) 
 
         pred = np.array(pred)
         gt = np.array(gt)
