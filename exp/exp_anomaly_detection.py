@@ -3,7 +3,9 @@ from exp.exp_basic import Exp_Basic
 from utils.tools import EarlyStopping, adjust_learning_rate, adjustment
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 import torch.multiprocessing
+import matplotlib.pyplot as plt
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 import torch
@@ -203,6 +205,209 @@ class Exp_Anomaly_Detection(Exp_Basic):
             accuracy, precision,
             recall, f_score))
         f.write('\n')
+        try:
+            # 计算基于连续异常分数的 ROC / PR 指标，适合观察阈值变化下的整体性能。
+            fpr, tpr, _ = roc_curve(gt, test_energy)
+            roc_auc = auc(fpr, tpr)
+            prec_curve, rec_curve, _ = precision_recall_curve(gt, test_energy)
+            ap = average_precision_score(gt, test_energy)
+
+            # 保存 ROC 曲线。
+            plt.figure()
+            plt.plot(fpr, tpr, color='darkorange', lw=2,
+                     label='ROC curve (AUC = %0.4f)' % roc_auc)
+            plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('False Positive Rate')
+            plt.ylabel('True Positive Rate')
+            plt.title('Receiver Operating Characteristic')
+            plt.legend(loc='lower right')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(folder_path, 'roc_curve.png'))
+            plt.close()
+
+            # 保存 PR 曲线。
+            plt.figure()
+            plt.plot(rec_curve, prec_curve, color='blue', lw=2,
+                     label='PR curve (AP = %0.4f)' % ap)
+            plt.xlim([0.0, 1.0])
+            plt.ylim([0.0, 1.05])
+            plt.xlabel('Recall')
+            plt.ylabel('Precision')
+            plt.title('Precision-Recall Curve')
+            plt.legend(loc='lower left')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(folder_path, 'pr_curve.png'))
+            plt.close()
+
+            # 将异常分数归一化到 [0, 1]，方便和阈值、标签一起展示。
+            energy_norm = (test_energy - np.min(test_energy)) / (
+                np.max(test_energy) - np.min(test_energy) + 1e-8
+            )
+            anomaly_idx = np.where(gt == 1)[0]
+            pred_idx = np.where(pred == 1)[0]
+
+            # 额外截取一段局部区间用于放大显示：
+            # 优先围绕真实异常区域，如果没有异常点则展示前 20% 的测试序列。
+            total_len = len(gt)
+            zoom_len = min(max(total_len // 5, 200), total_len)
+            if anomaly_idx.size > 0:
+                center_idx = int(np.median(anomaly_idx))
+                zoom_start = max(0, center_idx - zoom_len // 2)
+            else:
+                zoom_start = 0
+            zoom_end = min(total_len, zoom_start + zoom_len)
+            zoom_start = max(0, zoom_end - zoom_len)
+
+            anomaly_mask = (anomaly_idx >= zoom_start) & (anomaly_idx < zoom_end)
+            pred_mask = (pred_idx >= zoom_start) & (pred_idx < zoom_end)
+            anomaly_idx_zoom = anomaly_idx[anomaly_mask] - zoom_start
+            pred_idx_zoom = pred_idx[pred_mask] - zoom_start
+
+            # 全量测试集异常分数图。
+            plt.figure(figsize=(12, 4))
+            plt.plot(energy_norm, label='Normalized Anomaly Score')
+            if anomaly_idx.size > 0:
+                plt.scatter(
+                    anomaly_idx, energy_norm[anomaly_idx], c='r', s=10,
+                    label='Ground Truth Anomaly'
+                )
+            if pred_idx.size > 0:
+                plt.scatter(
+                    pred_idx, energy_norm[pred_idx], facecolors='none',
+                    edgecolors='g', s=20, label='Predicted Anomaly'
+                )
+            plt.xlabel('Time Index')
+            plt.ylabel('Normalized Score')
+            plt.title('Anomaly Scores on Test Set')
+            plt.legend(loc='upper right')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(folder_path, 'anomaly_score_timeseries.png'))
+            plt.close()
+
+            # 局部放大异常分数图，便于观察异常附近的分数变化。
+            plt.figure(figsize=(12, 4))
+            zoom_energy = energy_norm[zoom_start:zoom_end]
+            plt.plot(zoom_energy, label='Normalized Anomaly Score (Zoom)')
+            if anomaly_idx_zoom.size > 0:
+                plt.scatter(
+                    anomaly_idx_zoom, zoom_energy[anomaly_idx_zoom], c='r', s=14,
+                    label='Ground Truth Anomaly'
+                )
+            if pred_idx_zoom.size > 0:
+                plt.scatter(
+                    pred_idx_zoom, zoom_energy[pred_idx_zoom], facecolors='none',
+                    edgecolors='g', s=26, label='Predicted Anomaly'
+                )
+            plt.xlabel('Local Time Index')
+            plt.ylabel('Normalized Score')
+            plt.title('Anomaly Scores on Test Set (Zoom)')
+            plt.legend(loc='upper right')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(os.path.join(folder_path, 'anomaly_score_timeseries_zoom.png'))
+            plt.close()
+
+            f.write('AUC : {:0.4f}, Average Precision (AP) : {:0.4f}\n'.format(roc_auc, ap))
+
+            try:
+                # 全量二值预测与真实标签对比图。
+                plt.figure(figsize=(12, 3))
+                plt.step(range(len(gt)), gt, where='mid', label='Ground Truth', color='red')
+                plt.step(range(len(pred)), pred, where='mid', label='Predicted', color='green', alpha=0.7)
+                plt.ylim([-0.1, 1.1])
+                plt.xlabel('Time Index')
+                plt.ylabel('Anomaly (0/1)')
+                plt.title('Prediction vs Ground Truth')
+                plt.legend(loc='upper right')
+                plt.grid(True)
+                plt.tight_layout()
+                plt.savefig(os.path.join(folder_path, 'prediction_vs_groundtruth.png'))
+                plt.close()
+
+                # 局部放大的预测与真实标签对比图。
+                plt.figure(figsize=(12, 3))
+                gt_zoom = gt[zoom_start:zoom_end]
+                pred_zoom = pred[zoom_start:zoom_end]
+                plt.step(range(len(gt_zoom)), gt_zoom, where='mid', label='Ground Truth', color='red')
+                plt.step(range(len(pred_zoom)), pred_zoom, where='mid', label='Predicted', color='green', alpha=0.7)
+                plt.ylim([-0.1, 1.1])
+                plt.xlabel('Local Time Index')
+                plt.ylabel('Anomaly (0/1)')
+                plt.title('Prediction vs Ground Truth (Zoom)')
+                plt.legend(loc='upper right')
+                plt.grid(True)
+                plt.tight_layout()
+                plt.savefig(os.path.join(folder_path, 'prediction_vs_groundtruth_zoom.png'))
+                plt.close()
+            except Exception:
+                pass
+
+            try:
+                # 全量异常分数 + 阈值图，用于直观看到阈值与预测位置。
+                plt.figure(figsize=(12, 4))
+                en_min, en_max = np.min(test_energy), np.max(test_energy)
+                energy_norm_local = (test_energy - en_min) / (en_max - en_min + 1e-8)
+                thr_norm = (threshold - en_min) / (en_max - en_min + 1e-8)
+
+                plt.plot(energy_norm_local, label='Normalized Anomaly Score')
+                plt.hlines(
+                    thr_norm, 0, len(energy_norm_local) - 1,
+                    colors='orange', linestyles='--', label='Threshold'
+                )
+                if anomaly_idx.size > 0:
+                    plt.scatter(
+                        anomaly_idx, energy_norm_local[anomaly_idx], c='r', s=10,
+                        label='Ground Truth Anomaly'
+                    )
+                if pred_idx.size > 0:
+                    plt.scatter(
+                        pred_idx, energy_norm_local[pred_idx], facecolors='none',
+                        edgecolors='g', s=20, label='Predicted Anomaly'
+                    )
+                plt.xlabel('Time Index')
+                plt.ylabel('Normalized Score')
+                plt.title('Anomaly Score with Threshold')
+                plt.legend(loc='upper right')
+                plt.grid(True)
+                plt.tight_layout()
+                plt.savefig(os.path.join(folder_path, 'anomaly_score_with_threshold.png'))
+                plt.close()
+
+                # 局部放大异常分数 + 阈值图，便于查看阈值附近的误报和漏报。
+                plt.figure(figsize=(12, 4))
+                zoom_energy_local = energy_norm_local[zoom_start:zoom_end]
+                plt.plot(zoom_energy_local, label='Normalized Anomaly Score (Zoom)')
+                plt.hlines(
+                    thr_norm, 0, len(zoom_energy_local) - 1,
+                    colors='orange', linestyles='--', label='Threshold'
+                )
+                if anomaly_idx_zoom.size > 0:
+                    plt.scatter(
+                        anomaly_idx_zoom, zoom_energy_local[anomaly_idx_zoom], c='r', s=14,
+                        label='Ground Truth Anomaly'
+                    )
+                if pred_idx_zoom.size > 0:
+                    plt.scatter(
+                        pred_idx_zoom, zoom_energy_local[pred_idx_zoom], facecolors='none',
+                        edgecolors='g', s=26, label='Predicted Anomaly'
+                    )
+                plt.xlabel('Local Time Index')
+                plt.ylabel('Normalized Score')
+                plt.title('Anomaly Score with Threshold (Zoom)')
+                plt.legend(loc='upper right')
+                plt.grid(True)
+                plt.tight_layout()
+                plt.savefig(os.path.join(folder_path, 'anomaly_score_with_threshold_zoom.png'))
+                plt.close()
+            except Exception:
+                pass
+        except Exception as e:
+            f.write('Curve generation failed: ' + str(e) + '\n')
         f.write('\n')
         f.close()
         return
