@@ -970,3 +970,64 @@ class KDD(Dataset):
             return np.float32(self.test[
                               index // self.step * self.win_size:index // self.step * self.win_size + self.win_size]), np.float32(
                 self.test_labels[index // self.step * self.win_size:index // self.step * self.win_size + self.win_size])
+class CIC(Dataset):
+    def __init__(self, args, root_path, win_size, step=1, flag="train"):
+        self.flag = flag
+        self.step = step
+        self.win_size = win_size
+        self.scaler = StandardScaler()
+        train_path = os.path.join(root_path, "train.csv")
+        test_path = os.path.join(root_path, "test.csv")
+        label_path = os.path.join(root_path, "test_label.csv")
+
+        if all(os.path.exists(p) for p in [train_path, test_path, label_path]):
+            train_df      = pd.read_csv(train_path)
+            test_df       = pd.read_csv(test_path)
+            test_label_df = pd.read_csv(label_path)
+        else:
+            ds_data  = load_dataset(HUGGINGFACE_REPO, name="NB15-data")
+            ds_label = load_dataset(HUGGINGFACE_REPO, name="NB15-label")
+            train_df      = ds_data["train"].to_pandas()
+            test_df       = ds_data["test"].to_pandas()
+            test_label_df = ds_label[next(iter(ds_label))].to_pandas()
+
+        data = train_df.values[:, 1:]
+        data = np.nan_to_num(data)
+        self.scaler.fit(data)
+        data = self.scaler.transform(data)
+        
+        test_data = test_df.values[:, 1:]
+        test_data = np.nan_to_num(test_data)
+        self.test = self.scaler.transform(test_data)
+        
+        self.train = data
+        data_len = len(self.train)
+        self.val = self.train[(int)(data_len * 0.8):]
+        self.test_labels = test_label_df.values[:, 1:]
+        print("test:", self.test.shape)
+        print("train:", self.train.shape)
+
+    def __len__(self):
+        if self.flag == "train":
+            return (self.train.shape[0] - self.win_size) // self.step + 1
+        elif (self.flag == 'val'):
+            return (self.val.shape[0] - self.win_size) // self.step + 1
+        elif (self.flag == 'test'):
+            return (self.test.shape[0] - self.win_size) // self.step + 1
+        else:
+            return (self.test.shape[0] - self.win_size) // self.win_size + 1
+
+    def __getitem__(self, index):
+        index = index * self.step
+        if self.flag == "train":
+            return np.float32(self.train[index:index + self.win_size]), np.float32(self.test_labels[0:self.win_size])
+        elif (self.flag == 'val'):
+            return np.float32(self.val[index:index + self.win_size]), np.float32(self.test_labels[0:self.win_size])
+        elif (self.flag == 'test'):
+            return np.float32(self.test[index:index + self.win_size]), np.float32(
+                self.test_labels[index:index + self.win_size])
+        else:
+            return np.float32(self.test[
+                              index // self.step * self.win_size:index // self.step * self.win_size + self.win_size]), np.float32(
+                self.test_labels[index // self.step * self.win_size:index // self.step * self.win_size + self.win_size])
+        
