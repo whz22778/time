@@ -252,8 +252,10 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
             # 额外截取一段局部区间用于放大显示：
             # 优先围绕真实异常区域，如果没有异常点则展示前 20% 的测试序列。
+            # 同时限制一个最大窗口长度，避免测试集过长时局部图仍然过于拥挤。
             total_len = len(gt)
-            zoom_len = min(max(total_len // 5, 200), total_len)
+            zoom_len_max = 10000
+            zoom_len = min(max(total_len // 5, 200), zoom_len_max, total_len)
             if anomaly_idx.size > 0:
                 center_idx = int(np.median(anomaly_idx))
                 zoom_start = max(0, center_idx - zoom_len // 2)
