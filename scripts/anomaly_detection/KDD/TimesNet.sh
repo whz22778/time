@@ -11,10 +11,10 @@ python -u run.py \
   --seq_len 60 \
   --pred_len 0 \
   --d_model 64 \
-  --d_ff 64 \
+  --d_ff 128 \
   --e_layers 2 \
-  --enc_in 41 \
-  --c_out 41 \
+  --enc_in 23 \
+  --c_out 23 \
   --top_k 3 \
   --anomaly_ratio 1 \
   --batch_size 128 \

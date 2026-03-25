@@ -10,11 +10,11 @@ python -u run.py \
   --features M \
   --seq_len 60 \
   --pred_len 0 \
-  --d_model 128 \
+  --d_model 64 \
   --d_ff 128 \
-  --e_layers 3 \
-  --enc_in 41 \
-  --c_out 41 \
+  --e_layers 2 \
+  --enc_in 23 \
+  --c_out 23 \
   --anomaly_ratio 1 \
   --batch_size 128 \
   --train_epochs 3
