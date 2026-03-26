@@ -23,6 +23,36 @@ class Exp_Anomaly_Detection(Exp_Basic):
     def __init__(self, args):
         super(Exp_Anomaly_Detection, self).__init__(args)
 
+    def _save_loss_curve(self, setting, train_losses, vali_losses, test_losses):
+        folder_path = os.path.join('./test_results', setting)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        epochs = np.arange(1, len(train_losses) + 1)
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(epochs, train_losses, marker='o', linewidth=2, label='Train Loss')
+        plt.plot(epochs, vali_losses, marker='s', linewidth=2, label='Vali Loss')
+        plt.plot(epochs, test_losses, marker='^', linewidth=2, label='Test Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title('Loss Curve')
+        plt.xticks(epochs)
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(os.path.join(folder_path, 'loss_curve.png'))
+        plt.close()
+
+        loss_history = np.column_stack([epochs, train_losses, vali_losses, test_losses])
+        np.savetxt(
+            os.path.join(folder_path, 'loss_curve.csv'),
+            loss_history,
+            delimiter=',',
+            header='epoch,train_loss,vali_loss,test_loss',
+            comments=''
+        )
+
     def _build_model(self):
         model = self.model_dict[self.args.model](self.args).float()
 
@@ -78,6 +108,9 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
+        train_loss_history = []
+        vali_loss_history = []
+        test_loss_history = []
 
         for epoch in range(self.args.train_epochs):
             iter_count = 0
@@ -113,6 +146,9 @@ class Exp_Anomaly_Detection(Exp_Basic):
             train_loss = np.average(train_loss)
             vali_loss = self.vali(vali_data, vali_loader, criterion)
             test_loss = self.vali(test_data, test_loader, criterion)
+            train_loss_history.append(train_loss)
+            vali_loss_history.append(vali_loss)
+            test_loss_history.append(test_loss)
 
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
                 epoch + 1, train_steps, train_loss, vali_loss, test_loss))
@@ -121,6 +157,8 @@ class Exp_Anomaly_Detection(Exp_Basic):
                 print("Early stopping")
                 break
             adjust_learning_rate(model_optim, epoch + 1, self.args)
+
+        self._save_loss_curve(setting, train_loss_history, vali_loss_history, test_loss_history)
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
