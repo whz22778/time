@@ -225,7 +225,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
         # (4) detection adjustment
         # 常检测metric
-        # gt, pred = adjustment(gt, pred) 
+        gt, pred = adjustment(gt, pred) 
 
         pred = np.array(pred)
         gt = np.array(gt)
