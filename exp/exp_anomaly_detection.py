@@ -6,6 +6,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 import torch.multiprocessing
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 import torch
@@ -356,34 +357,84 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
             try:
                 # 全量二值预测与真实标签对比图。
-                plt.figure(figsize=(12, 3))
-                plt.step(range(len(gt)), gt, where='mid', label='Ground Truth', color='red')
-                plt.step(range(len(pred)), pred, where='mid', label='Predicted', color='green', alpha=0.7)
-                plt.ylim([-0.1, 1.1])
-                plt.xlabel('Time Index')
-                plt.ylabel('Anomaly (0/1)')
-                plt.title('Prediction vs Ground Truth')
-                plt.legend(loc='upper right')
-                plt.grid(True)
-                plt.tight_layout()
-                plt.savefig(os.path.join(folder_path, 'prediction_vs_groundtruth.png'))
-                plt.close()
+                def plot_prediction_comparison(gt_arr, pred_arr, save_path, title, xlabel):
+                    gt_arr = np.asarray(gt_arr).astype(int)
+                    pred_arr = np.asarray(pred_arr).astype(int)
+                    x = np.arange(len(gt_arr))
+
+                    tp_idx = np.where((gt_arr == 1) & (pred_arr == 1))[0]
+                    fp_idx = np.where((gt_arr == 0) & (pred_arr == 1))[0]
+                    fn_idx = np.where((gt_arr == 1) & (pred_arr == 0))[0]
+
+                    plt.figure(figsize=(12, 3.6))
+                    plt.fill_between(
+                        x, 0, 1, where=(gt_arr == 1), step='mid',
+                        color='red', alpha=0.10
+                    )
+                    plt.step(x, gt_arr, where='mid', color='red', linewidth=1.8)
+                    plt.step(x, pred_arr, where='mid', color='green', linewidth=1.5, alpha=0.75)
+
+                    if tp_idx.size > 0:
+                        plt.scatter(
+                            tp_idx, np.full(tp_idx.shape, 1.05), s=24,
+                            facecolors='none', edgecolors='green', linewidths=1.2
+                        )
+                    if fp_idx.size > 0:
+                        plt.scatter(
+                            fp_idx, np.full(fp_idx.shape, 0.5), s=22,
+                            c='orange', marker='x', linewidths=1.2
+                        )
+                    if fn_idx.size > 0:
+                        plt.scatter(
+                            fn_idx, np.full(fn_idx.shape, 0.95), s=28,
+                            c='red', marker='v'
+                        )
+
+                    legend_handles = [
+                        Line2D([0], [0], color='red', linewidth=1.8, label='Ground Truth'),
+                        Line2D([0], [0], color='green', linewidth=1.5, label='Predicted'),
+                        Line2D(
+                            [0], [0], marker='o', color='green', markerfacecolor='none',
+                            markersize=5, linewidth=0, label='TP'
+                        ),
+                        Line2D(
+                            [0], [0], marker='x', color='orange',
+                            markersize=6, linewidth=0, label='FP'
+                        ),
+                        Line2D(
+                            [0], [0], marker='v', color='red',
+                            markersize=6, linewidth=0, label='FN'
+                        )
+                    ]
+
+                    plt.ylim([-0.1, 1.15])
+                    plt.xlabel(xlabel)
+                    plt.ylabel('Anomaly (0/1)')
+                    plt.title(title)
+                    plt.legend(handles=legend_handles, loc='upper right', ncol=2)
+                    plt.grid(True, alpha=0.3)
+                    plt.tight_layout()
+                    plt.savefig(save_path)
+                    plt.close()
+
+                plot_prediction_comparison(
+                    gt,
+                    pred,
+                    os.path.join(folder_path, 'prediction_vs_groundtruth.png'),
+                    'Prediction vs Ground Truth',
+                    'Time Index'
+                )
 
                 # 局部放大的预测与真实标签对比图。
-                plt.figure(figsize=(12, 3))
                 gt_zoom = gt[zoom_start:zoom_end]
                 pred_zoom = pred[zoom_start:zoom_end]
-                plt.step(range(len(gt_zoom)), gt_zoom, where='mid', label='Ground Truth', color='red')
-                plt.step(range(len(pred_zoom)), pred_zoom, where='mid', label='Predicted', color='green', alpha=0.7)
-                plt.ylim([-0.1, 1.1])
-                plt.xlabel('Local Time Index')
-                plt.ylabel('Anomaly (0/1)')
-                plt.title('Prediction vs Ground Truth (Zoom)')
-                plt.legend(loc='upper right')
-                plt.grid(True)
-                plt.tight_layout()
-                plt.savefig(os.path.join(folder_path, 'prediction_vs_groundtruth_zoom.png'))
-                plt.close()
+                plot_prediction_comparison(
+                    gt_zoom,
+                    pred_zoom,
+                    os.path.join(folder_path, 'prediction_vs_groundtruth_zoom.png'),
+                    'Prediction vs Ground Truth (Zoom)',
+                    'Local Time Index'
+                )
             except Exception:
                 pass
 
