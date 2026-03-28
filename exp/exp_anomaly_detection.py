@@ -43,17 +43,17 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
                 if tp_idx.size > 0:
                     plt.scatter(
-                        tp_idx, np.full(tp_idx.shape, 1.05), s=24,
+                        tp_idx, np.full(tp_idx.shape, 1.05), s=10,
                         facecolors='none', edgecolors='green', linewidths=1.2
                     )
                 if fp_idx.size > 0:
                     plt.scatter(
-                        fp_idx, np.full(fp_idx.shape, 0.5), s=22,
+                        fp_idx, np.full(fp_idx.shape, 1.1), s=10,
                         c='orange', marker='x', linewidths=1.2
                     )
                 if fn_idx.size > 0:
                     plt.scatter(
-                        fn_idx, np.full(fn_idx.shape, 0.95), s=28,
+                        fn_idx, np.full(fn_idx.shape, 1.15), s=10,
                         c='red', marker='v'
                     )
                     
@@ -74,7 +74,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
                     )
                 ]
 
-                plt.ylim([-0.1, 1.15])
+                plt.ylim([-0.1, 1.2])
                 plt.xlabel(xlabel)
                 plt.ylabel('Anomaly (0/1)')
                 plt.title(title)
