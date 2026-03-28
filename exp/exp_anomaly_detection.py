@@ -114,50 +114,6 @@ class Exp_Anomaly_Detection(Exp_Basic):
         pred_mask = (pred_idx >= zoom_start) & (pred_idx < zoom_end)
         anomaly_idx_zoom = anomaly_idx[anomaly_mask] - zoom_start
         pred_idx_zoom = pred_idx[pred_mask] - zoom_start 
-        # 全量测试集异常分数图。
-        plt.figure(figsize=(12, 4))
-        plt.plot(energy_norm, label='Normalized Anomaly Score')
-        if anomaly_idx.size > 0:
-            plt.scatter(
-                anomaly_idx, energy_norm[anomaly_idx], c='r', s=10,
-                label='Ground Truth Anomaly'
-            )
-        if pred_idx.size > 0:
-            plt.scatter(
-                pred_idx, energy_norm[pred_idx], facecolors='none',
-                edgecolors='g', s=20, label='Predicted Anomaly'
-            )
-        plt.xlabel('Time Index')
-        plt.ylabel('Normalized Score')
-        plt.title('Anomaly Scores on Test Set')
-        plt.legend(loc='upper right')
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(os.path.join(folder_path, 'anomaly_score_timeseries.png'))
-        plt.close()
-        
-        # 局部放大异常分数图，便于观察异常附近的分数变化。
-        plt.figure(figsize=(12, 4))
-        zoom_energy = energy_norm[zoom_start:zoom_end]
-        plt.plot(zoom_energy, label='Normalized Anomaly Score (Zoom)')
-        if anomaly_idx_zoom.size > 0:
-            plt.scatter(
-                anomaly_idx_zoom, zoom_energy[anomaly_idx_zoom], c='r', s=14,
-                label='Ground Truth Anomaly'
-            )
-        if pred_idx_zoom.size > 0:
-            plt.scatter(
-                pred_idx_zoom, zoom_energy[pred_idx_zoom], facecolors='none',
-                edgecolors='g', s=26, label='Predicted Anomaly'
-            )
-        plt.xlabel('Local Time Index')
-        plt.ylabel('Normalized Score')
-        plt.title('Anomaly Scores on Test Set (Zoom)')
-        plt.legend(loc='upper right')
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(os.path.join(folder_path, 'anomaly_score_timeseries_zoom.png'))
-        plt.close()
 
         try:
             # 全量二值预测与真实标签对比图。
