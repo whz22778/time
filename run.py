@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
     parser.add_argument('--model_id', type=str, required=True, default='test', help='model id')
     parser.add_argument('--model', type=str, required=True, default='Autoformer',
-                        help='model name, options: [Autoformer, Transformer, TimesNet]')
+                        help='model name, options: [Autoformer, Transformer, TimesNet,kmeans, dbscan]')
 
     # data loader
     parser.add_argument('--data', type=str, required=True, default='ETTh1', help='dataset type')
@@ -45,6 +45,18 @@ if __name__ == '__main__':
 
     # anomaly detection task
     parser.add_argument('--anomaly_ratio', type=float, default=0.25, help='prior anomaly ratio (%%)')
+    # kmeans (anomaly detection)
+    parser.add_argument('--kmeans_n_clusters', type=int, default=10, help='number of clusters for KMeans')
+    parser.add_argument('--kmeans_max_iter', type=int, default=300, help='max iterations for KMeans')
+    parser.add_argument('--kmeans_tol', type=float, default=1e-4, help='tolerance for KMeans')
+    parser.add_argument('--kmeans_init', type=str, default='k-means++', help='init method for KMeans')
+    # dbscan (anomaly detection)
+    parser.add_argument('--dbscan_eps', type=float, default=0.5, help='eps radius for DBSCAN')
+    parser.add_argument('--dbscan_min_samples', type=int, default=5, help='min samples for DBSCAN')
+    parser.add_argument('--dbscan_metric', type=str, default='euclidean', help='distance metric for DBSCAN')
+    parser.add_argument('--dbscan_algorithm', type=str, default='auto', help='algorithm for DBSCAN')
+    parser.add_argument('--dbscan_leaf_size', type=int, default=30, help='leaf size for DBSCAN')
+    parser.add_argument('--dbscan_n_jobs', type=int, default=None, help='n_jobs for DBSCAN')
 
     # model define
     parser.add_argument('--expand', type=int, default=2, help='expansion factor for Mamba')
@@ -182,6 +194,9 @@ if __name__ == '__main__':
     elif args.task_name == 'imputation':
         from exp.exp_imputation import Exp_Imputation
         Exp = Exp_Imputation
+    elif args.task_name == 'anomaly_detection' and args.model.lower() in ['kmeans', 'dbscan']:
+        from exp.exp_anomaly_detection_kmeans import Exp_Anomaly_Detection_KMeans
+        Exp = Exp_Anomaly_Detection_KMeans
     elif args.task_name == 'anomaly_detection':
         from exp.exp_anomaly_detection import Exp_Anomaly_Detection
         Exp = Exp_Anomaly_Detection
