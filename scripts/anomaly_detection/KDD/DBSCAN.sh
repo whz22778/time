@@ -10,8 +10,8 @@ python -u run.py \
   --features M \
   --seq_len 20 \
   --pred_len 0 \
-  --anomaly_ratio 1 \
+  --anomaly_ratio 35 \
   --batch_size 128 \
   --train_epochs 1 \
-  --dbscan_eps 0.5 \
+  --dbscan_eps 0.6 \
   --dbscan_min_samples 5

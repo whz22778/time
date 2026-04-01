@@ -8,9 +8,9 @@ python -u run.py \
   --model kmeans \
   --data CIC \
   --features M \
-  --seq_len 20 \
+  --seq_len 1 \
   --pred_len 0 \
-  --anomaly_ratio 1 \
+  --anomaly_ratio 4 \
   --batch_size 128 \
   --train_epochs 1 \
   --kmeans_n_clusters 5

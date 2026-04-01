@@ -8,9 +8,9 @@ python -u run.py \
   --model kmeans \
   --data KDD \
   --features M \
-  --seq_len 20 \
+  --seq_len 1 \
   --pred_len 0 \
-  --anomaly_ratio 1 \
-  --batch_size 128 \
+  --anomaly_ratio 35 \
+  --batch_size 64 \
   --train_epochs 1 \
-  --kmeans_n_clusters 5
+  --kmeans_n_clusters 4
