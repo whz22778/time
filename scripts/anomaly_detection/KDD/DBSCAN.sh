@@ -8,10 +8,10 @@ python -u run.py \
   --model dbscan \
   --data KDD \
   --features M \
-  --seq_len 20 \
+  --seq_len 1 \
   --pred_len 0 \
   --anomaly_ratio 35 \
-  --batch_size 128 \
+  --batch_size 64 \
   --train_epochs 1 \
   --dbscan_eps 0.6 \
   --dbscan_min_samples 5
