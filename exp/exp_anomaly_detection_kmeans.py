@@ -4,7 +4,6 @@ from utils.tools import adjustment
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
-from sklearn.neighbors import NearestNeighbors
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -19,7 +18,6 @@ warnings.filterwarnings('ignore')
 class Exp_Anomaly_Detection_KMeans(Exp_Basic):
     def __init__(self, args):
         super(Exp_Anomaly_Detection_KMeans, self).__init__(args)
-        self._dbscan_nn = None
         self._win_len = None
 
     def plot_prediction_comparison(self, gt_arr, pred_arr, save_path, title, xlabel):
@@ -293,21 +291,17 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
             return flat, point_labels, window_labels, win_len
         return flat, None, None, None
 
-    def _init_dbscan_nn(self, train_flat):
-        metric = getattr(self.args, "dbscan_metric", "euclidean")
-        self._dbscan_nn = NearestNeighbors(n_neighbors=1, metric=metric)
-        self._dbscan_nn.fit(train_flat)
-
     def _compute_window_scores(self, flat_windows):
         if self.model_type == 'kmeans':
             distances = self.model.transform(flat_windows)
             return np.min(distances, axis=1)
-        if self.model_type == 'dbscan':
-            if self._dbscan_nn is None:
-                raise RuntimeError("DBSCAN NN index is not initialized.")
-            distances, _ = self._dbscan_nn.kneighbors(flat_windows, return_distance=True)
-            return distances.reshape(-1)
         raise NotImplementedError(f"Model [{self.model_type}] does not support scoring.")
+
+    def _dbscan_scores_and_pred(self, flat_windows):
+        labels = self.model.fit_predict(flat_windows)
+        window_pred = (labels == -1).astype(int)
+        window_scores = window_pred.astype(float)
+        return window_scores, window_pred
 
     def train(self, setting):
         _, train_loader = self._get_data(flag='train')
@@ -357,19 +351,23 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
         self._win_len = win_len
 
         if self.model_type == 'dbscan':
-            self._init_dbscan_nn(train_flat)
+            test_window_scores, window_pred = self._dbscan_scores_and_pred(test_flat)
+            test_energy = np.repeat(test_window_scores, win_len)
+            pred = np.repeat(window_pred, win_len)
+            threshold = 0.5
+            print("Threshold :", threshold)
+        else:
+            train_window_scores = self._compute_window_scores(train_flat)
+            test_window_scores = self._compute_window_scores(test_flat)
 
-        train_window_scores = self._compute_window_scores(train_flat)
-        test_window_scores = self._compute_window_scores(test_flat)
+            train_energy = np.repeat(train_window_scores, win_len)
+            test_energy = np.repeat(test_window_scores, win_len)
 
-        train_energy = np.repeat(train_window_scores, win_len)
-        test_energy = np.repeat(test_window_scores, win_len)
+            combined_energy = np.concatenate([train_energy, test_energy], axis=0)
+            threshold = np.percentile(combined_energy, 100 - self.args.anomaly_ratio)
+            print("Threshold :", threshold)
 
-        combined_energy = np.concatenate([train_energy, test_energy], axis=0)
-        threshold = np.percentile(combined_energy, 100 - self.args.anomaly_ratio)
-        print("Threshold :", threshold)
-
-        pred = (test_energy > threshold).astype(int)
+            pred = (test_energy > threshold).astype(int)
         gt = test_point_labels.astype(int)
 
 
