@@ -4,7 +4,7 @@ python -u run.py \
   --task_name anomaly_detection \
   --is_training 1 \
   --root_path ./dataset/KDD \
-  --model_id KDD \
+  --model_id KDD_6c_35 \
   --model kmeans \
   --data KDD \
   --features M \
@@ -13,4 +13,4 @@ python -u run.py \
   --anomaly_ratio 35 \
   --batch_size 64 \
   --train_epochs 1 \
-  --kmeans_n_clusters 4
+  --kmeans_n_clusters 6
