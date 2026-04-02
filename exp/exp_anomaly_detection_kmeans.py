@@ -261,14 +261,37 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
             batch_x = batch_x[:, :, None]
         return batch_x.reshape(batch_x.shape[0], -1)
 
-    def _collect_flat_and_labels(self, loader, collect_labels):
+    def _collect_flat_and_labels(self, loader, collect_labels, max_windows=None):
         flat_list = []
         point_labels = []
         window_labels = []
         win_len = None
+        seen = 0
 
         for batch_x, batch_y in loader:
-            flat_list.append(self._flatten_windows(batch_x))
+            if max_windows is not None and seen >= max_windows:
+                break
+            if max_windows is not None:
+                remaining = max_windows - seen
+                if hasattr(batch_x, "detach"):
+                    batch_x_np = batch_x.detach().cpu().numpy()
+                else:
+                    batch_x_np = np.asarray(batch_x)
+                if batch_x_np.ndim == 2:
+                    batch_x_np = batch_x_np[:, :, None]
+                if batch_x_np.shape[0] > remaining:
+                    batch_x_np = batch_x_np[:remaining]
+                    batch_x = batch_x[:remaining]
+                    if hasattr(batch_y, "__len__"):
+                        batch_y = batch_y[:remaining]
+            else:
+                batch_x_np = None
+
+            if batch_x_np is not None:
+                flat_list.append(batch_x_np.reshape(batch_x_np.shape[0], -1))
+            else:
+                flat_list.append(self._flatten_windows(batch_x))
+            seen += flat_list[-1].shape[0]
             if collect_labels:
                 if hasattr(batch_y, "detach"):
                     batch_y = batch_y.detach().cpu().numpy()
@@ -310,7 +333,12 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        train_x, _, _, _ = self._collect_flat_and_labels(train_loader, collect_labels=False)
+        max_windows = None
+        if self.model_type == 'dbscan' and str(getattr(self.args, "data", "")).upper() in ("NB15", "CIC"):
+            max_windows = 50000
+        train_x, _, _, _ = self._collect_flat_and_labels(
+            train_loader, collect_labels=False, max_windows=max_windows
+        )
 
         if self.model_type == 'kmeans':
             self.model.fit(train_x)
@@ -326,7 +354,9 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
 
     def test(self, setting, test=0):
         _, test_loader = self._get_data(flag='test')
-        _, train_loader = self._get_data(flag='train')
+        train_loader = None
+        if self.model_type != 'dbscan':
+            _, train_loader = self._get_data(flag='train')
 
         if test:
             model_path = os.path.join('./checkpoints/' + setting, f'{self.model_type}.pkl')
@@ -341,7 +371,9 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
-        train_flat, _, _, _ = self._collect_flat_and_labels(train_loader, collect_labels=False)
+        train_flat = None
+        if train_loader is not None:
+            train_flat, _, _, _ = self._collect_flat_and_labels(train_loader, collect_labels=False)
         test_flat, test_point_labels, test_window_labels, win_len = self._collect_flat_and_labels(
             test_loader, collect_labels=True
         )
