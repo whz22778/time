@@ -4,7 +4,7 @@ python -u run.py \
   --task_name anomaly_detection \
   --is_training 1 \
   --root_path ./dataset/KDD \
-  --model_id KDD \
+  --model_id KDD_30 \
   --model Transformer \
   --data KDD \
   --features M \
@@ -15,6 +15,6 @@ python -u run.py \
   --e_layers 2 \
   --enc_in 23 \
   --c_out 23 \
-  --anomaly_ratio 1 \
+  --anomaly_ratio 30 \
   --batch_size 128 \
   --train_epochs 3
