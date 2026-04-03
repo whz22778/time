@@ -2,20 +2,20 @@ export CUDA_VISIBLE_DEVICES=0
 
 python -u run.py \
   --task_name anomaly_detection \
-  --is_training 1 \
+  --is_training 0 \
   --root_path ./dataset/KDD \
-  --model_id KDD \
+  --model_id KDD_5k \
   --model TimesNet \
   --data KDD \
   --features M \
-  --seq_len 60 \
+  --seq_len 40 \
   --pred_len 0 \
   --d_model 64 \
   --d_ff 128 \
   --e_layers 2 \
   --enc_in 23 \
   --c_out 23 \
-  --top_k 3 \
-  --anomaly_ratio 1 \
+  --top_k 5 \
+  --anomaly_ratio 40 \
   --batch_size 128 \
   --train_epochs 3
