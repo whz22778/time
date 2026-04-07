@@ -57,6 +57,11 @@ if __name__ == '__main__':
     parser.add_argument('--dbscan_algorithm', type=str, default='auto', help='algorithm for DBSCAN')
     parser.add_argument('--dbscan_leaf_size', type=int, default=30, help='leaf size for DBSCAN')
     parser.add_argument('--dbscan_n_jobs', type=int, default=None, help='n_jobs for DBSCAN')
+    # birch (anomaly detection)
+    parser.add_argument('--birch_threshold', type=float, default=0.5, help='threshold for Birch')
+    parser.add_argument('--birch_branching_factor', type=int, default=50, help='branching factor for Birch')
+    parser.add_argument('--birch_n_clusters', type=int, default=None, help='n_clusters for Birch (None for no global clustering)')
+    parser.add_argument('--birch_compute_labels', type=bool, default=False, help='compute labels for Birch')
 
     # model define
     parser.add_argument('--expand', type=int, default=2, help='expansion factor for Mamba')
@@ -194,7 +199,7 @@ if __name__ == '__main__':
     elif args.task_name == 'imputation':
         from exp.exp_imputation import Exp_Imputation
         Exp = Exp_Imputation
-    elif args.task_name == 'anomaly_detection' and args.model.lower() in ['kmeans', 'dbscan']:
+    elif args.task_name == 'anomaly_detection' and args.model.lower() in ['kmeans', 'dbscan', 'birch']:
         from exp.exp_anomaly_detection_kmeans import Exp_Anomaly_Detection_KMeans
         Exp = Exp_Anomaly_Detection_KMeans
     elif args.task_name == 'anomaly_detection':

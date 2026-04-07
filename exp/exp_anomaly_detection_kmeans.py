@@ -318,6 +318,9 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
         if self.model_type == 'kmeans':
             distances = self.model.transform(flat_windows)
             return np.min(distances, axis=1)
+        if self.model_type == 'birch':
+            distances = self.model.transform(flat_windows)
+            return np.min(distances, axis=1)
         raise NotImplementedError(f"Model [{self.model_type}] does not support scoring.")
 
     def _dbscan_scores_and_pred(self, flat_windows):
@@ -341,6 +344,8 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
         )
 
         if self.model_type == 'kmeans':
+            self.model.fit(train_x)
+        elif self.model_type == 'birch':
             self.model.fit(train_x)
         elif self.model_type == 'dbscan':
             self.model.fit(train_x)
