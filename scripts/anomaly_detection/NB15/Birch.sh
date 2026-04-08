@@ -10,7 +10,7 @@ python -u run.py \
   --features M \
   --seq_len 1 \
   --pred_len 0 \
-  --anomaly_ratio 1 \
+  --anomaly_ratio 40 \
   --batch_size 128 \
   --train_epochs 1 \
   --birch_threshold 0.1 \
