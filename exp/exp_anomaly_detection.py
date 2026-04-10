@@ -277,6 +277,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
             os.makedirs(path)
 
         time_now = time.time()
+        train_time_start = time.time()
 
         train_steps = len(train_loader)
         early_stopping = EarlyStopping(patience=self.args.patience, verbose=True)
@@ -337,6 +338,10 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
         best_model_path = path + '/' + 'checkpoint.pth'
         self.model.load_state_dict(torch.load(best_model_path))
+
+        elapsed = time.time() - train_time_start
+        self.train_time = elapsed
+        print("Training time: {:.2f}s".format(elapsed))
 
         return self.model
 
@@ -415,6 +420,8 @@ class Exp_Anomaly_Detection(Exp_Basic):
 
         f = open("result_anomaly_detection.txt", 'a')
         f.write(setting + "  \n")
+        if hasattr(self, "train_time"):
+            f.write("Training time: {:.2f}s\n".format(self.train_time))
         f.write("Before adjustment" + "\n")
         f.write("Accuracy : {:0.4f}, Precision : {:0.4f}, Recall : {:0.4f}, F-score : {:0.4f} ".format(
             accuracy, precision,

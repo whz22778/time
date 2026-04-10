@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 import os
+import time
 import pickle
 import warnings
 
@@ -336,6 +337,7 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        time_start = time.time()
         max_windows = None
         if self.model_type == 'dbscan' and str(getattr(self.args, "data", "")).upper() in ("NB15", "CIC"):
             max_windows = 50000
@@ -354,6 +356,10 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
 
         with open(os.path.join(path, f'{self.model_type}.pkl'), 'wb') as f:
             pickle.dump(self.model, f)
+
+        elapsed = time.time() - time_start
+        self.train_time = elapsed
+        print("Training time: {:.2f}s".format(elapsed))
 
         return self.model
 
@@ -424,6 +430,8 @@ class Exp_Anomaly_Detection_KMeans(Exp_Basic):
 
         f = open("result_anomaly_detection.txt", 'a')
         f.write(setting + "  \n")
+        if hasattr(self, "train_time"):
+            f.write("Training time: {:.2f}s\n".format(self.train_time))
         f.write("Before adjustment" + "\n")
         f.write("Accuracy : {:0.4f}, Precision : {:0.4f}, Recall : {:0.4f}, F-score : {:0.4f} ".format(
             accuracy, precision,
