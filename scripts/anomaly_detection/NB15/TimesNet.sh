@@ -16,6 +16,6 @@ python -u run.py \
   --enc_in 23 \
   --c_out 23 \
   --top_k 3 \
-  --anomaly_ratio 1 \
+  --anomaly_ratio 50 \
   --batch_size 128 \
   --train_epochs 3
