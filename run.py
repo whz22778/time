@@ -63,11 +63,26 @@ if __name__ == '__main__':
     parser.add_argument('--birch_n_clusters', type=int, default=None, help='n_clusters for Birch (None for no global clustering)')
     parser.add_argument('--birch_compute_labels', type=bool, default=False, help='compute labels for Birch')
 
+    # ImprovedTimesNet* extras
+    parser.add_argument('--cluster_init', type=str, default='random',
+                        choices=['random', 'kmeans'],
+                        help="Cluster center init for ClusterGuidedFeature: 'random' or 'kmeans' (fit on train normal data).")
+    parser.add_argument('--cluster_freeze', action='store_true', default=False,
+                        help='If set, freezes cluster centers after initialization (useful for kmeans init).')
+    parser.add_argument('--cluster_kmeans_samples', type=int, default=20000,
+                        help='Max number of normal samples used to fit KMeans for cluster_init=kmeans.')
+    parser.add_argument('--cluster_kmeans_seed', type=int, default=2021,
+                        help='Random seed for KMeans cluster initialization.')
+    parser.add_argument('--cluster_kmeans_max_iter', type=int, default=300,
+                        help='Max iterations for KMeans when cluster_init=kmeans.')
+
     # model define
     parser.add_argument('--expand', type=int, default=2, help='expansion factor for Mamba')
     parser.add_argument('--d_conv', type=int, default=4, help='conv kernel size for Mamba')
     parser.add_argument('--top_k', type=int, default=5, help='for TimesBlock')
     parser.add_argument('--num_kernels', type=int, default=6, help='for Inception')
+    parser.add_argument('--n_clusters', type=int, default=5, help='number of clusters for ClusterGuidedFeature')
+    parser.add_argument('--feature_k', type=int, default=6, help='number of features for interaction in FeatureInteractionLayer')
     parser.add_argument('--enc_in', type=int, default=7, help='encoder input size')
     parser.add_argument('--dec_in', type=int, default=7, help='decoder input size')
     parser.add_argument('--c_out', type=int, default=7, help='output size')
