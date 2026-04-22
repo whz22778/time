@@ -4,14 +4,14 @@ python -u run.py \
   --task_name anomaly_detection \
   --is_training 1 \
   --root_path ./dataset/CIC \
-  --model_id CIC_65f \
+  --model_id CIC_40f_10 \
   --model birch \
   --data CIC \
   --features M \
   --seq_len 1 \
   --pred_len 0 \
-  --anomaly_ratio 2 \
-  --batch_size 128 \
+  --anomaly_ratio 10 \
+  --batch_size 256 \
   --train_epochs 1 \
   --birch_threshold 0.5 \
-  --birch_branching_factor 65
+  --birch_branching_factor 40
