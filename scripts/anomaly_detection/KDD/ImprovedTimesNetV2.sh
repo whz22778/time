@@ -16,8 +16,9 @@ python -u run.py \
   --enc_in 23 \
   --c_out 23 \
   --top_k 5 \
-  --n_clusters 10 \
-  --feature_k 8 \
+  --n_clusters 6 \
+  --feature_k 6 \
+  --interaction_topk fixed \
   --cluster_init kmeans \
   --cluster_freeze \
   --anomaly_ratio 40 \

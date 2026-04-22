@@ -27,9 +27,10 @@ class FeatureInteractionLayer(nn.Module):
     data-driven score each forward pass (no gradients through the selection).
     """
 
-    def __init__(self, k=6):
+    def __init__(self, k=6, mode: str = "dynamic"):
         super().__init__()
         self.k = int(k)
+        self.mode = str(mode).lower()
 
     def forward(self, x):
         # x: [B, L, D]
@@ -38,14 +39,18 @@ class FeatureInteractionLayer(nn.Module):
         if k <= 1:
             return x
 
-        # Importance score per feature channel (stable + cheap).
-        # score: [D]
-        score = x.detach().abs().mean(dim=(0, 1))
-        topk_idx = torch.topk(score, k=k, largest=True, sorted=False).indices  # [k]
+        if self.mode == "fixed":
+            # Use the first k channels (best when features are pre-sorted by MI importance).
+            topk_feat = x[:, :, :k]
+        else:
+            # Importance score per feature channel (stable + cheap).
+            # score: [D]
+            score = x.detach().abs().mean(dim=(0, 1))
+            topk_idx = torch.topk(score, k=k, largest=True, sorted=False).indices  # [k]
 
-        # Gather: [B, L, k]
-        idx = topk_idx.view(1, 1, k).expand(b, l, k)
-        topk_feat = torch.gather(x, dim=2, index=idx)
+            # Gather: [B, L, k]
+            idx = topk_idx.view(1, 1, k).expand(b, l, k)
+            topk_feat = torch.gather(x, dim=2, index=idx)
 
         # Pairwise products -> cross_dim = k*(k-1)/2
         crosses = []
@@ -153,7 +158,8 @@ class Model(nn.Module):
         n_clusters = int(getattr(configs, "n_clusters", 5))
         self.aug_dim = enc_in + cross_dim + n_clusters
 
-        self.feature_interaction = FeatureInteractionLayer(k=k)
+        interaction_mode = getattr(configs, "interaction_topk", "dynamic")
+        self.feature_interaction = FeatureInteractionLayer(k=k, mode=interaction_mode)
         self.cluster_feature = ClusterGuidedFeature(n_clusters=n_clusters, input_dim=enc_in)
         self.feature_reweighting = FeatureReweighting(dim=self.aug_dim)
 

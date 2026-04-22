@@ -8,16 +8,17 @@ python -u run.py \
   --model ImprovedTimesNetV2 \
   --data CIC \
   --features M \
-  --seq_len 100 \
+  --seq_len 40 \
   --pred_len 0 \
   --d_model 64 \
   --d_ff 128 \
   --e_layers 2 \
   --enc_in 20 \
   --c_out 20 \
-  --top_k 3 \
-  --n_clusters 10 \
-  --feature_k 8 \
+  --top_k 1 \
+  --n_clusters 5 \
+  --feature_k 6 \
+  --interaction_topk fixed \
   --cluster_init kmeans \
   --cluster_freeze \
   --anomaly_ratio 1 \

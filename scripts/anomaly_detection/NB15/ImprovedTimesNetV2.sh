@@ -15,9 +15,10 @@ python -u run.py \
   --e_layers 2 \
   --enc_in 23 \
   --c_out 23 \
-  --top_k 3 \
-  --n_clusters 10 \
-  --feature_k 8 \
+  --top_k 1 \
+  --n_clusters 7 \
+  --feature_k 6 \
+  --interaction_topk fixed \
   --cluster_init kmeans \
   --cluster_freeze \
   --anomaly_ratio 50 \

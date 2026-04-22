@@ -64,6 +64,11 @@ if __name__ == '__main__':
     parser.add_argument('--birch_compute_labels', type=bool, default=False, help='compute labels for Birch')
 
     # ImprovedTimesNet* extras
+    parser.add_argument('--interaction_topk', type=str, default='dynamic',
+                        choices=['dynamic', 'fixed'],
+                        help="FeatureInteractionLayer top-k selection: "
+                             "'dynamic' scores channels per-batch, 'fixed' uses the first k channels "
+                             "(recommended if features are pre-sorted by MI importance).")
     parser.add_argument('--cluster_init', type=str, default='random',
                         choices=['random', 'kmeans'],
                         help="Cluster center init for ClusterGuidedFeature: 'random' or 'kmeans' (fit on train normal data).")
