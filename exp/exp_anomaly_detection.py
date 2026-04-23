@@ -427,7 +427,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
             accuracy, precision,
             recall, f_score))
         f.write('\n')
-        if not self.args.result:
+        if self.args.result:
             #before图与指标
             self._save_plt(test_energy, gt, pred, threshold, before_folder)
         
@@ -491,7 +491,7 @@ class Exp_Anomaly_Detection(Exp_Basic):
             accuracy, precision,
             recall, f_score))
         f.write('\n')
-        if not self.args.result:
+        if self.args.result:
             #after图与指标
             self._save_plt(test_energy, gt, pred, threshold, after_folder)
         f.write('\n')
