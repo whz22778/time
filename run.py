@@ -22,6 +22,8 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, required=True, default='Autoformer',
                         help='model name, options: [Autoformer, Transformer, TimesNet,kmeans, dbscan]')
 
+    parser.add_argument('--result', type=int, required=True, default='0', help='Whether to generate the result ')
+
     # data loader
     parser.add_argument('--data', type=str, required=True, default='ETTh1', help='dataset type')
     parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
