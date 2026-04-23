@@ -74,7 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('--cluster_init', type=str, default='random',
                         choices=['random', 'kmeans'],
                         help="Cluster center init for ClusterGuidedFeature: 'random' or 'kmeans' (fit on train normal data).")
-    parser.add_argument('--cluster_freeze', action='store_true', default=False,
+    parser.add_argument('--cluster_freeze', type=int, default=1,
                         help='If set, freezes cluster centers after initialization (useful for kmeans init).')
     parser.add_argument('--cluster_kmeans_samples', type=int, default=20000,
                         help='Max number of normal samples used to fit KMeans for cluster_init=kmeans.')
