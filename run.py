@@ -23,6 +23,7 @@ if __name__ == '__main__':
                         help='model name, options: [Autoformer, Transformer, TimesNet,kmeans, dbscan]')
 
     parser.add_argument('--result', type=int, required=True, default='0', help='Whether to generate the result ')
+    parser.add_argument('--asn', type=int , default=7 , help='Ablation Study Number') 
 
     # data loader
     parser.add_argument('--data', type=str, required=True, default='ETTh1', help='dataset type')

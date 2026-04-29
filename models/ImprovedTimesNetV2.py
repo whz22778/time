@@ -254,9 +254,12 @@ class Model(nn.Module):
             self.cluster_feature.cluster_centers.requires_grad_(False)
 
     def _augment(self, x_enc):
-        x_enc = self.feature_interaction(x_enc)
-        x_enc = self.cluster_feature(x_enc)
-        x_enc = self.feature_reweighting(x_enc)
+        if self.configs.asn >> 2 & 1:
+            x_enc = self.feature_interaction(x_enc)
+        if self.configs.asn >> 1 & 1:
+            x_enc = self.cluster_feature(x_enc)
+        if self.configs.asn & 1:
+            x_enc = self.feature_reweighting(x_enc)
         return x_enc
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
