@@ -4,7 +4,7 @@ python -u run.py \
   --task_name anomaly_detection \
   --is_training 0 \
   --root_path ./dataset/KDD \
-  --model_id KDD_5k_4f_5c_uf \
+  --model_id KDD_5k_4f_5c \
   --model ImprovedTimesNetV2 \
   --data KDD \
   --features M \
@@ -20,7 +20,7 @@ python -u run.py \
   --feature_k 4 \
   --interaction_topk fixed \
   --cluster_init kmeans \
-  --cluster_freeze 0 \
+  --cluster_freeze 1 \
   --anomaly_ratio 41 \
   --batch_size 128 \
   --train_epochs 3 \
