@@ -156,7 +156,11 @@ class Model(nn.Module):
         k = min(int(getattr(configs, "feature_k", 6)), enc_in)
         cross_dim = k * (k - 1) // 2
         n_clusters = int(getattr(configs, "n_clusters", 5))
-        self.aug_dim = enc_in + cross_dim + n_clusters
+        self.aug_dim = enc_in
+        if self.configs.asn >> 2 & 1:
+            self.aug_dim += cross_dim
+        if self.configs.asn >> 1 & 1:
+            self.aug_dim += n_clusters
 
         interaction_mode = getattr(configs, "interaction_topk", "dynamic")
         self.feature_interaction = FeatureInteractionLayer(k=k, mode=interaction_mode)
